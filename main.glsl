@@ -87,6 +87,15 @@ float E_FON_exact(float mu, float r)
 // EON importance sampling
 ////////////////////////////////////////////////////////////////////////////////
 
+// V is assumed to be in local (+Z) space.
+mat3 orthonormal_basis_ltc(vec3 V)
+{
+    float lenSqr = dot(V.xy, V.xy);
+    vec3 X = lenSqr > 0.0f ? vec3(V.x, V.y, 0.0f) * inversesqrt(lenSqr) : vec3(1, 0, 0);
+    vec3 Y = vec3(-X.y, X.x, 0.0f); // cross(N, X)
+    return mat3(X, Y, vec3(0, 0, 1));
+}
+
 void ltc_terms(float mu, float r,
                out float a, out float b, out float c, out float d)
 {
