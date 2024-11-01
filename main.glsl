@@ -96,7 +96,6 @@ void ltc_terms(float mu, float r,
     d = ((0.540852f + (-1.01625f + 0.475392f*mu)*mu)*r)/(-1.0743f + mu*(0.0725628f + mu));
 }
 
-// (NB, uses opposite convention that wo_local is the incident/camera ray direction)
 vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
 {
     float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);    // coeffs of LTC $M$
@@ -116,7 +115,6 @@ vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
     return vec4(wi, pdf_wi);
 }
 
-// (NB, uses opposite convention that wo_local is the incident/camera ray direction)
 float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
 {
     mat3 toLTC = transpose(orthonormal_basis_ltc(wo_local));                 // transform $w_i$ to LTC space
@@ -144,17 +142,17 @@ vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
     float mu = wo_local.z;
     float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
     float P_c = 1.0f - P_u;
-    vec4 wi; float pdf_C;
+    vec4 wi; float pdf_c;
     if (u1 <= P_u) {
         u1 = u1 / P_u;
         wi.xyz = uniform_lobe_sample(u1, u2);
-        pdf_C = cltc_pdf(wo_local, wi.xyz, r); }
+        pdf_c = cltc_pdf(wo_local, wi.xyz, r); }
     else {
         u1 = (u1 - P_u) / P_c;
         wi = cltc_sample(wo_local, r, u1, u2);
-        pdf_C = wi.w; }
-    const float pdf_U = 1.0f / (2.0f * PI);
-    wi.w = P_u*pdf_U + P_c*pdf_C;
+        pdf_c = wi.w; }
+    const float pdf_u = 1.0f / (2.0f * PI);
+    wi.w = P_u*pdf_u + P_c*pdf_c;
     return wi;
 }
 
@@ -163,9 +161,9 @@ float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
     float mu = wo_local.z;
     float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
     float P_c = 1.0 - P_u;
-    float pdf_cltc = cltc_pdf(wo_local, wi_local, r);
-    const float pdf_U = 1.0f / (2.0f * PI);
-    return P_u*pdf_U + P_c*pdf_cltc;
+    float pdf_c = cltc_pdf(wo_local, wi_local, r);
+    const float pdf_u = 1.0f / (2.0f * PI);
+    return P_u*pdf_u + P_c*pdf_c;
 }
 
 
@@ -174,7 +172,10 @@ float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-    Note that we assume the usual convention for unidirectional path tracing,
+    Note that this implementation assumes throughout that the directions are
+    specified in a local space where the $z$-direction aligns with the surface normal.
+
+    We assume the usual convention for unidirectional path tracing,
     where the direction of the outgoing ray $\omega_o$ is known, and the
     incident ray direction $\omega_i$ is the one being sampled.
 
