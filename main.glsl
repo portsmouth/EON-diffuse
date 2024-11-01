@@ -20,7 +20,7 @@ float E_FON_exact(float mu, float r)
     float AF = 1.0f / (1.0f + constant1_FON * r); // FON A coeff.
     float BF = r * AF;                            // FON B coeff.
     float Si = sqrt(1.0f - (mu * mu));
-    float G = Si * (safe_acos(mu) - Si * mu)
+    float G = Si * (acos(clamp(mu, -1.0f, 1.0f)) - Si * mu)
             + (2.0f / 3.0f) * ((Si / mu) * (1.0f - (Si * Si * Si)) - Si);
     return AF + (BF/PI) * G;
 }
@@ -54,15 +54,15 @@ float E_FON_exact(float mu, float r)
       float s = dot(wi_local, wo_local) - mu_i * mu_o;       // QON $s$ term
       float sovertF = s > 0.0f ? s / max(mu_i, mu_o) : s;    // FON $s/t$
       float AF = 1.0f / (1.0f + constant1_FON * r);          // FON $A$ coeff.
-      vec3 f_ss = (rho/PI) * AF * (1.0f + r * sovertF); // single-scatter
+      vec3 f_ss = (rho/PI) * AF * (1.0f + r * sovertF); // single-scatter lobe
       float EFo = exact ? E_FON_exact(mu_o, r):              // FON $w_o$ albedo (exact)
                           E_FON_approx(mu_o, r);             // FON $w_o$ albedo (approx)
       float EFi = exact ? E_FON_exact(mu_i, r):              // FON $w_i$ albedo (exact)
                           E_FON_approx(mu_i, r);             // FON $w_i$ albedo (approx)
-      float avgEF = AF * (1.0f + constant2_FON * r);  // avg. albedo
+      float avgEF = AF * (1.0f + constant2_FON * r);         // avg. albedo
       vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
       const float eps = 1.0e-7f;
-      vec3 f_ms = (rho_ms/PI) * max(eps, 1.0f - EFo) // multi-scatter lobe
+      vec3 f_ms = (rho_ms/PI) * max(eps, 1.0f - EFo)    // multi-scatter lobe
                               * max(eps, 1.0f - EFi)
                               / max(eps, 1.0f - avgEF);
       return f_ss + f_ms;
@@ -90,29 +90,29 @@ float E_FON_exact(float mu, float r)
 void ltc_terms(float mu, float r,
                out float a, out float b, out float c, out float d)
 {
-    a = 1.0 + r*(0.303392 + (-0.518982 + 0.111709*mu)*mu + (-0.276266 + 0.335918*mu)*r);
-    b = r*(-1.16407 + 1.15859*mu + (0.150815 - 0.150105*mu)*r)/(mu*mu*mu - 1.43545);
-    c = 1.0 + (0.20013 + (-0.506373 + 0.261777*mu)*mu)*r;
-    d = ((0.540852 + (-1.01625 + 0.475392*mu)*mu)*r)/(-1.0743 + mu*(0.0725628 + mu));
+    a = 1.0 + r*(0.303392f + (-0.518982f + 0.111709f*mu)*mu + (-0.276266f + 0.335918f*mu)*r);
+    b = r*(-1.16407f + 1.15859f*mu + (0.150815f - 0.150105f*mu)*r)/(mu*mu*mu - 1.43545f);
+    c = 1.0f + (0.20013f + (-0.506373f + 0.261777f*mu)*mu)*r;
+    d = ((0.540852f + (-1.01625f + 0.475392f*mu)*mu)*r)/(-1.0743f + mu*(0.0725628f + mu));
 }
 
 // (NB, uses opposite convention that wo_local is the incident/camera ray direction)
 vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
 {
-    float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);  // coeffs of LTC $M$
-    float R = sqrt(u1); float phi = 2.0 * PI * u2;           // CLTC sampling
-    float x = R * cos(phi); float y = R * sin(phi);          // CLTC sampling
-    float vz = 1.0 / sqrt(d*d + 1.0);                        // CLTC sampling factors
-    float s = 0.5 * (1.0 + vz);                              // CLTC sampling factors
-    x = -mix(sqrt(1.0 - y*y), x, s);                         // CLTC sampling
-    vec3 wh = vec3(x, y, sqrt(max(1.0 - (x*x + y*y), 0.0))); // $w_h$ sample via CLTC
-    float pdf_wh = wh.z / (PI * s);                          // PDF of $w_h$ sample
-    vec3 wi = vec3(a*wh.x + b*wh.z, c*wh.y, d*wh.x + wh.z);  // $M w_h$ (unnormalized)
-    float len = length(wi);                                  // $|M w_h| = 1/|M^{-1} w_h|$
-    float detM = c*(a - b*d);                                // $|M|$
-    float pdf_wi = pdf_wh * len*len*len / detM;              // $w_i$ sample PDF
-    mat3 fromLTC = orthonormal_basis_ltc(wo_local);          // transform $w_i$ to world space
-    wi = normalize(fromLTC * wi);                            // transform $w_i$ to world space
+    float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);    // coeffs of LTC $M$
+    float R = sqrt(u1); float phi = 2.0f * PI * u2;            // CLTC sampling
+    float x = R * cos(phi); float y = R * sin(phi);            // CLTC sampling
+    float vz = 1.0f / sqrt(d*d + 1.0f);                        // CLTC sampling factors
+    float s = 0.5f * (1.0f + vz);                              // CLTC sampling factors
+    x = -mix(sqrt(1.0f - y*y), x, s);                          // CLTC sampling
+    vec3 wh = vec3(x, y, sqrt(max(1.0f - (x*x + y*y), 0.0f))); // $w_h$ sample via CLTC
+    float pdf_wh = wh.z / (PI * s);                            // PDF of $w_h$ sample
+    vec3 wi = vec3(a*wh.x + b*wh.z, c*wh.y, d*wh.x + wh.z);    // $M w_h$ (unnormalized)
+    float len = length(wi);                                    // $|M w_h| = 1/|M^{-1} w_h|$
+    float detM = c*(a - b*d);                                  // $|M|$
+    float pdf_wi = pdf_wh * len*len*len / detM;                // $w_i$ sample PDF
+    mat3 fromLTC = orthonormal_basis_ltc(wo_local);            // transform $w_i$ to world space
+    wi = normalize(fromLTC * wi);                              // transform $w_i$ to world space
     return vec4(wi, pdf_wi);
 }
 
@@ -120,21 +120,21 @@ vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
 float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
 {
     mat3 toLTC = transpose(orthonormal_basis_ltc(wo_local));                 // transform $w_i$ to LTC space
-    vec3 wi = toLTC * wi_local;                                               // transform $w_i$ to LTC space
+    vec3 wi = toLTC * wi_local;                                              // transform $w_i$ to LTC space
     float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);                  // coeffs of LTC $M$
     float detM = c*(a - b*d);                                                // $|M|$
     vec3 wh = vec3(c*(wi.x - b*wi.z), (a - b*d)*wi.y, -c*(d*wi.x - a*wi.z)); // $\mathrm{adj}(M) wi$
     float lensq = dot(wh, wh);                                               // $|M| |M^{-1} wi|$
-    float vz = 1.0 / sqrt(d*d + 1.0);                                        // CLTC sampling factors
-    float s = 0.5 * (1.0 + vz);                                              // CLTC sampling factors
-    float pdf = sqr(detM / lensq) * max(wh.z, 0.0) / (PI * s);               // $w_i$ sample PDF
+    float vz = 1.0f / sqrt(d*d + 1.0f);                                      // CLTC sampling factors
+    float s = 0.5f * (1.0f + vz);                                            // CLTC sampling factors
+    float pdf = sqr(detM / lensq) * max(wh.z, 0.0f) / (PI * s);              // $w_i$ sample PDF
     return pdf;
 }
 
 vec3 uniform_lobe_sample(float u1, float u2)
 {
     float z = u1;
-    float R = sqrt(1.0 - z*z); float phi = 2.0 * PI * u2;
+    float R = sqrt(1.0f - z*z); float phi = 2.0f * PI * u2;
     float x = R * cos(phi); float y = R * sin(phi);
     return vec3(x, y, z);
 }
@@ -142,8 +142,8 @@ vec3 uniform_lobe_sample(float u1, float u2)
 vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
 {
     float mu = wo_local.z;
-    float P_u = pow(r, 0.1) * (0.162925 + mu*(-0.372058 + (0.538233 - 0.290822*mu)*mu));
-    float P_c = 1.0 - P_u;
+    float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
+    float P_c = 1.0f - P_u;
     vec4 wi; float pdf_C;
     if (u1 <= P_u) {
         u1 = u1 / P_u;
@@ -153,7 +153,7 @@ vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
         u1 = (u1 - P_u) / P_c;
         wi = cltc_sample(wo_local, r, u1, u2);
         pdf_C = wi.w; }
-    const float pdf_U = 1.0 / (2.0 * PI);
+    const float pdf_U = 1.0f / (2.0f * PI);
     wi.w = P_u*pdf_U + P_c*pdf_C;
     return wi;
 }
@@ -161,10 +161,10 @@ vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
 float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
 {
     float mu = wo_local.z;
-    float P_u = pow(r, 0.1) * (0.162925 + mu*(-0.372058 + (0.538233 - 0.290822*mu)*mu));
+    float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
     float P_c = 1.0 - P_u;
     float pdf_cltc = cltc_pdf(wo_local, wi_local, r);
-    const float pdf_U = 1.0 / (2.0 * PI);
+    const float pdf_U = 1.0f / (2.0f * PI);
     return P_u*pdf_U + P_c*pdf_cltc;
 }
 
@@ -189,12 +189,12 @@ float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
 uniform vec3 albedo;
 uniform float roughness;
 
-const float DENOM_TOLERANCE = 1.0e-7;
+const float DENOM_TOLERANCE = 1.0e-7f;
 
 vec3 diffuse_brdf_evaluate(in vec3 wi_local, in vec3 wo_local,
                            inout float pdf_wo_local)
 {
-    if (wi_local.z < DENOM_TOLERANCE || wo_local.z < DENOM_TOLERANCE) return vec3(0.0);
+    if (wi_local.z < DENOM_TOLERANCE || wo_local.z < DENOM_TOLERANCE) return vec3(0.0f);
     pdf_wo_local = pdf_EON(wi_local, wo_local, roughness);
     return f_EON(albedo, roughness, wi_local, wo_local, true);
 }
@@ -202,7 +202,7 @@ vec3 diffuse_brdf_evaluate(in vec3 wi_local, in vec3 wo_local,
 vec3 diffuse_brdf_sample(in vec3 wo_local, inout uint rndSeed,
                          out vec3 wi_local, out float pdf_wi_local)
 {
-    if (wo_local.z < DENOM_TOLERANCE) return vec3(0.0);
+    if (wo_local.z < DENOM_TOLERANCE) return vec3(0.0f);
     float u1 = rand(rndSeed); float u2 = rand(rndSeed);
     vec4 wiP = sample_EON(wo_local, roughness, u1, u2);
     wi_local     = wiP.xyz;
@@ -212,6 +212,6 @@ vec3 diffuse_brdf_sample(in vec3 wo_local, inout uint rndSeed,
 
 vec3 diffuse_brdf_albedo(in vec3 wo_local, inout uint rndSeed)
 {
-    if (wo_local.z < DENOM_TOLERANCE) return vec3(0.0);
-    return E_EON(albedo, roughness, wo_local);
+    if (wo_local.z < DENOM_TOLERANCE) return vec3(0.0f);
+    return E_EON(albedo, roughness, wo_local, true);
 }
