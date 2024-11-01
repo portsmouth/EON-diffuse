@@ -140,10 +140,9 @@ float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
 
 vec3 uniform_lobe_sample(float u1, float u2)
 {
-    float z = u1;
-    float R = sqrt(1.0f - z*z); float phi = 2.0f * PI * u2;
-    float x = R * cos(phi); float y = R * sin(phi);
-    return vec3(x, y, z);
+    float sinTheta = sqrt(1.0f - u1*u1);
+    float phi = 2.0f * PI * u2;
+    return vec3(sinTheta * cos(phi), sinTheta * sin(phi), u1);
 }
 
 vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
