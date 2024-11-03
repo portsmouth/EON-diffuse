@@ -92,7 +92,7 @@ mat3 orthonormal_basis_ltc(vec3 V)
 {
     float lenSqr = dot(V.xy, V.xy);
     vec3 X = lenSqr > 0.0f ? vec3(V.x, V.y, 0.0f) * inversesqrt(lenSqr) : vec3(1, 0, 0);
-    vec3 Y = vec3(-X.y, X.x, 0.0f); // cross(N, X)
+    vec3 Y = vec3(-X.y, X.x, 0.0f); // cross(Z, X)
     return mat3(X, Y, vec3(0, 0, 1));
 }
 
