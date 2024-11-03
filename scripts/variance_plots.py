@@ -10,7 +10,6 @@ import multiprocess
 from tqdm import tqdm
 from functools import partial
 
-
 #############################################################################
 # Reproduces the variance plots for importance sampling of the EON model
 #############################################################################
