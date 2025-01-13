@@ -26,62 +26,62 @@ float E_FON_exact(float mu, float r)
 }
 
 // FON directional albedo (approx.)
- float E_FON_approx(float mu, float r)
-  {
-      float mucomp = 1.0f - mu;
-      float mucomp2 = mucomp * mucomp;
-      const mat2 Gcoeffs = mat2(0.0571085289f, -0.332181442f,
-                                0.491881867f, 0.0714429953f);
-      float GoverPi = dot(Gcoeffs * vec2(mucomp, mucomp2), vec2(1.0f, mucomp2));
-      return (1.0f + r * GoverPi) / (1.0f + constant1_FON * r);
-  }
+float E_FON_approx(float mu, float r)
+{
+    float mucomp = 1.0f - mu;
+    float mucomp2 = mucomp * mucomp;
+    const mat2 Gcoeffs = mat2(0.0571085289f, -0.332181442f,
+                              0.491881867f, 0.0714429953f);
+    float GoverPi = dot(Gcoeffs * vec2(mucomp, mucomp2), vec2(1.0f, mucomp2));
+    return (1.0f + r * GoverPi) / (1.0f + constant1_FON * r);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // EON BRDF
 ////////////////////////////////////////////////////////////////////////////////
 
-  // Evaluates EON BRDF value, given inputs:
-  //       rho = single-scattering albedo parameter
-  //         r = roughness in [0, 1]
-  //  wi_local = direction of incident ray (directed away from vertex)
-  //  wo_local = direction of outgoing ray (directed away from vertex)
-  //     exact = flag to select exact or fast approx. version
-  //
-  vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
-  {
-      float mu_i = wi_local.z;                               // input angle cos
-      float mu_o = wo_local.z;                               // output angle cos
-      float s = dot(wi_local, wo_local) - mu_i * mu_o;       // QON $s$ term
-      float sovertF = s > 0.0f ? s / max(mu_i, mu_o) : s;    // FON $s/t$
-      float AF = 1.0f / (1.0f + constant1_FON * r);          // FON $A$ coeff.
-      vec3 f_ss = (rho/PI) * AF * (1.0f + r * sovertF); // single-scatter lobe
-      float EFo = exact ? E_FON_exact(mu_o, r):              // FON $w_o$ albedo (exact)
-                          E_FON_approx(mu_o, r);             // FON $w_o$ albedo (approx)
-      float EFi = exact ? E_FON_exact(mu_i, r):              // FON $w_i$ albedo (exact)
-                          E_FON_approx(mu_i, r);             // FON $w_i$ albedo (approx)
-      float avgEF = AF * (1.0f + constant2_FON * r);         // avg. albedo
-      vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
-      const float eps = 1.0e-7f;
-      vec3 f_ms = (rho_ms/PI) * max(eps, 1.0f - EFo)    // multi-scatter lobe
-                              * max(eps, 1.0f - EFi)
-                              / max(eps, 1.0f - avgEF);
-      return f_ss + f_ms;
-  }
+// Evaluates EON BRDF value, given inputs:
+//       rho = single-scattering albedo parameter
+//         r = roughness in [0, 1]
+//  wi_local = direction of incident ray (directed away from vertex)
+//  wo_local = direction of outgoing ray (directed away from vertex)
+//     exact = flag to select exact or fast approx. version
+//
+vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
+{
+    float mu_i = wi_local.z;                               // input angle cos
+    float mu_o = wo_local.z;                               // output angle cos
+    float s = dot(wi_local, wo_local) - mu_i * mu_o;       // QON $s$ term
+    float sovertF = s > 0.0f ? s / max(mu_i, mu_o) : s;    // FON $s/t$
+    float AF = 1.0f / (1.0f + constant1_FON * r);          // FON $A$ coeff.
+    vec3 f_ss = (rho/PI) * AF * (1.0f + r * sovertF); // single-scatter lobe
+    float EFo = exact ? E_FON_exact(mu_o, r):              // FON $w_o$ albedo (exact)
+                        E_FON_approx(mu_o, r);             // FON $w_o$ albedo (approx)
+    float EFi = exact ? E_FON_exact(mu_i, r):              // FON $w_i$ albedo (exact)
+                        E_FON_approx(mu_i, r);             // FON $w_i$ albedo (approx)
+    float avgEF = AF * (1.0f + constant2_FON * r);         // avg. albedo
+    vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
+    const float eps = 1.0e-7f;
+    vec3 f_ms = (rho_ms/PI) * max(eps, 1.0f - EFo)    // multi-scatter lobe
+                            * max(eps, 1.0f - EFi)
+                            / max(eps, 1.0f - avgEF);
+    return f_ss + f_ms;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // EON directional albedo
 ////////////////////////////////////////////////////////////////////////////////
 
-  vec3 E_EON(vec3 rho, float r, vec3 wi_local, bool exact)
-  {
-      float mu_i = wi_local.z;                       // input angle cos
-      float AF = 1.0f / (1.0f + constant1_FON * r);  // FON $A$ coeff.
-      float EF = exact ? E_FON_exact(mu_i, r):       // FON $w_i$ albedo (exact)
-                         E_FON_approx(mu_i, r);      // FON $w_i$ albedo (approx)
-      float avgEF = AF * (1.0f + constant2_FON * r); // average albedo
-      vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
-      return rho * EF + rho_ms * (1.0f - EF);
-  }
+vec3 E_EON(vec3 rho, float r, vec3 wi_local, bool exact)
+{
+    float mu_i = wi_local.z;                       // input angle cos
+    float AF = 1.0f / (1.0f + constant1_FON * r);  // FON $A$ coeff.
+    float EF = exact ? E_FON_exact(mu_i, r):       // FON $w_i$ albedo (exact)
+                       E_FON_approx(mu_i, r);      // FON $w_i$ albedo (approx)
+    float avgEF = AF * (1.0f + constant2_FON * r); // average albedo
+    vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
+    return rho * EF + rho_ms * (1.0f - EF);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // EON importance sampling
