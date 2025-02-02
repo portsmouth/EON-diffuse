@@ -97,18 +97,18 @@ mat3 orthonormal_basis_ltc(vec3 V)
     return mat3(X, Y, vec3(0, 0, 1));
 }
 
-void ltc_terms(float mu, float r,
-               out float a, out float b, out float c, out float d)
+void ltc_coeffs(float mu, float r,
+                out float a, out float b, out float c, out float d)
 {
     a = 1.0 + r*(0.303392f + (-0.518982f + 0.111709f*mu)*mu + (-0.276266f + 0.335918f*mu)*r);
     b = r*(-1.16407f + 1.15859f*mu + (0.150815f - 0.150105f*mu)*r)/(mu*mu*mu - 1.43545f);
     c = 1.0f + (0.20013f + (-0.506373f + 0.261777f*mu)*mu)*r;
-    d = ((0.540852f + (-1.01625f + 0.475392f*mu)*mu)*r)/(-1.0743f + mu*(0.0725628f + mu));
+    d = r*(0.540852f + (-1.01625f + 0.475392f*mu)*mu)/(-1.0743f + mu*(0.0725628f + mu));
 }
 
 vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
 {
-    float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);    // coeffs of LTC $M$
+    float a, b, c, d; ltc_coeffs(wo_local.z, r, a, b, c, d);   // coeffs of LTC $M$
     float R = sqrt(u1); float phi = 2.0f * PI * u2;            // CLTC sampling
     float x = R * cos(phi); float y = R * sin(phi);            // CLTC sampling
     float vz = 1.0f / sqrt(d*d + 1.0f);                        // CLTC sampling factors
@@ -129,7 +129,7 @@ float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
 {
     mat3 toLTC = transpose(orthonormal_basis_ltc(wo_local));                 // transform $w_i$ to LTC space
     vec3 wi = toLTC * wi_local;                                              // transform $w_i$ to LTC space
-    float a, b, c, d; ltc_terms(wo_local.z, r, a, b, c, d);                  // coeffs of LTC $M$
+    float a, b, c, d; ltc_coeffs(wo_local.z, r, a, b, c, d);                 // coeffs of LTC $M$
     float detM = c*(a - b*d);                                                // $|M|$
     vec3 wh = vec3(c*(wi.x - b*wi.z), (a - b*d)*wi.y, -c*(d*wi.x - a*wi.z)); // $\mathrm{adj}(M) wi$
     float lensq = dot(wh, wh);                                               // $|M| |M^{-1} wi|$
