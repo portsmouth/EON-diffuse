@@ -29,10 +29,11 @@ float E_FON_exact(float mu, float r)
 float E_FON_approx(float mu, float r)
 {
     float mucomp = 1.0f - mu;
-    float mucomp2 = mucomp * mucomp;
-    const mat2 Gcoeffs = mat2(0.0571085289f, -0.332181442f,
-                              0.491881867f, 0.0714429953f);
-    float GoverPi = dot(Gcoeffs * vec2(mucomp, mucomp2), vec2(1.0f, mucomp2));
+    const float g1 = 0.0571085289f;
+    const float g2 = 0.491881867f;
+    const float g3 = -0.332181442f;
+    const float g4 = 0.0714429953f;
+    float GoverPi = mucomp * (g1 + mucomp * (g2 + mucomp * (g3 + mucomp * g4)));
     return (1.0f + r * GoverPi) / (1.0f + constant1_FON * r);
 }
 
