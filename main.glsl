@@ -1,12 +1,13 @@
-/* Provides the source code listings given in the paper:
+/*
+    Provides the source code listings given in the paper:
 
-    https://arxiv.org/abs/2410.18026
+        https://arxiv.org/abs/2410.18026
 
-    "EON: A practical energy-preserving rough diffuse BRDF",
-        Jamie Portsmouth, Peter Kutz, Stephen Hill
+        "EON: A practical energy-preserving rough diffuse BRDF",
+            Jamie Portsmouth, Peter Kutz, Stephen Hill
 
-  Note that this implementation assumes throughout that the directions are
-  specified in a local space where the $z$-direction aligns with the surface normal.
+    Note that this implementation assumes throughout that the directions are
+    specified in a local space where the $z$-direction aligns with the surface normal.
 */
 
 const float PI            = 3.14159265f;
