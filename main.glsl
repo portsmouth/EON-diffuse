@@ -43,12 +43,11 @@ float E_FON_approx(float mu, float r)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Evaluates EON BRDF value, given inputs:
-//       rho = single-scattering albedo parameter
-//         r = roughness in [0, 1]
-//  wi_local = direction of incident ray (directed away from vertex)
-//  wo_local = direction of outgoing ray (directed away from vertex)
-//     exact = flag to select exact or fast approx. version
-//
+//          rho = single-scattering albedo parameter
+//            r = roughness in [0, 1]
+//     wi_local = direction of incident ray (directed away from vertex)
+//     wo_local = direction of outgoing ray (directed away from vertex)
+//        exact = flag to select exact or fast approx. version
 vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
 {
     float mu_i = wi_local.z;                               // input angle cos
