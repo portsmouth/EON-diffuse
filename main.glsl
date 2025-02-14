@@ -11,6 +11,7 @@
 */
 
 const float pi            = 3.14159265f;
+const float rcppi         = 1.0f / pi;
 const float constant1_FON = 0.5f - 2.0f / (3.0f * pi);
 const float constant2_FON = 2.0f / 3.0f - 28.0f / (15.0f * pi);
 
@@ -23,7 +24,7 @@ float E_FON_exact(float mu, float r)
     float Si = sqrt(1.0f - (mu * mu));
     float G = Si * (acos(clamp(mu, -1.0f, 1.0f)) - Si * mu)
             + (2.0f / 3.0f) * ((Si / mu) * (1.0f - (Si * Si * Si)) - Si);
-    return AF + (BF/pi) * G;
+    return AF + (BF * rcppi) * G;
 }
 
 // FON directional albedo (approx.)
@@ -55,7 +56,7 @@ vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
     float s = dot(wi_local, wo_local) - mu_i * mu_o;       // QON $s$ term
     float sovertF = s > 0.0f ? s / max(mu_i, mu_o) : s;    // FON $s/t$
     float AF = 1.0f / (1.0f + constant1_FON * r);          // FON $A$ coeff.
-    vec3 f_ss = (rho/pi) * AF * (1.0f + r * sovertF); // single-scatter lobe
+    vec3 f_ss = (rho * rcppi) * AF * (1.0f + r * sovertF); // single-scatter lobe
     float EFo = exact ? E_FON_exact(mu_o, r):              // FON $w_o$ albedo (exact)
                         E_FON_approx(mu_o, r);             // FON $w_o$ albedo (approx)
     float EFi = exact ? E_FON_exact(mu_i, r):              // FON $w_i$ albedo (exact)
@@ -63,9 +64,9 @@ vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
     float avgEF = AF * (1.0f + constant2_FON * r);         // avg. albedo
     vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
     const float eps = 1.0e-7f;
-    vec3 f_ms = (rho_ms/pi) * max(eps, 1.0f - EFo)    // multi-scatter lobe
-                            * max(eps, 1.0f - EFi)
-                            / max(eps, 1.0f - avgEF);
+    vec3 f_ms = (rho_ms * rcppi) * max(eps, 1.0f - EFo)    // multi-scatter lobe
+                                 * max(eps, 1.0f - EFi)
+                                 / max(eps, 1.0f - avgEF);
     return f_ss + f_ms;
 }
 
