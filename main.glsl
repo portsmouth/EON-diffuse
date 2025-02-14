@@ -18,8 +18,8 @@ const float constant2_FON = 2.0f / 3.0f - 28.0f / (15.0f * PI);
 float E_FON_exact(float mu, float r)
 {
     #define safe_acos(x) (acos(clamp(x, -1.0, 1.0)))
-    float AF = 1.0f / (1.0f + constant1_FON * r); // FON A coeff.
-    float BF = r * AF;                            // FON B coeff.
+    float AF = 1.0f / (1.0f + constant1_FON * r); // FON $A$ coeff.
+    float BF = r * AF;                            // FON $B$ coeff.
     float Si = sqrt(1.0f - (mu * mu));
     float G = Si * (acos(clamp(mu, -1.0f, 1.0f)) - Si * mu)
             + (2.0f / 3.0f) * ((Si / mu) * (1.0f - (Si * Si * Si)) - Si);
