@@ -10,9 +10,9 @@
     specified in a local space where the $z$-direction aligns with the surface normal.
 */
 
-const float PI            = 3.14159265f;
-const float constant1_FON = 0.5f - 2.0f / (3.0f * PI);
-const float constant2_FON = 2.0f / 3.0f - 28.0f / (15.0f * PI);
+const float pi            = 3.14159265f;
+const float constant1_FON = 0.5f - 2.0f / (3.0f * pi);
+const float constant2_FON = 2.0f / 3.0f - 28.0f / (15.0f * pi);
 
 // FON directional albedo (analytic)
 float E_FON_exact(float mu, float r)
@@ -23,7 +23,7 @@ float E_FON_exact(float mu, float r)
     float Si = sqrt(1.0f - (mu * mu));
     float G = Si * (acos(clamp(mu, -1.0f, 1.0f)) - Si * mu)
             + (2.0f / 3.0f) * ((Si / mu) * (1.0f - (Si * Si * Si)) - Si);
-    return AF + (BF/PI) * G;
+    return AF + (BF/pi) * G;
 }
 
 // FON directional albedo (approx.)
@@ -55,7 +55,7 @@ vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
     float s = dot(wi_local, wo_local) - mu_i * mu_o;       // QON $s$ term
     float sovertF = s > 0.0f ? s / max(mu_i, mu_o) : s;    // FON $s/t$
     float AF = 1.0f / (1.0f + constant1_FON * r);          // FON $A$ coeff.
-    vec3 f_ss = (rho/PI) * AF * (1.0f + r * sovertF); // single-scatter lobe
+    vec3 f_ss = (rho/pi) * AF * (1.0f + r * sovertF); // single-scatter lobe
     float EFo = exact ? E_FON_exact(mu_o, r):              // FON $w_o$ albedo (exact)
                         E_FON_approx(mu_o, r);             // FON $w_o$ albedo (approx)
     float EFi = exact ? E_FON_exact(mu_i, r):              // FON $w_i$ albedo (exact)
@@ -63,7 +63,7 @@ vec3 f_EON(vec3 rho, float r, vec3 wi_local, vec3 wo_local, bool exact)
     float avgEF = AF * (1.0f + constant2_FON * r);         // avg. albedo
     vec3 rho_ms = (rho * rho) * avgEF / (vec3(1.0f) - rho * (1.0f - avgEF));
     const float eps = 1.0e-7f;
-    vec3 f_ms = (rho_ms/PI) * max(eps, 1.0f - EFo)    // multi-scatter lobe
+    vec3 f_ms = (rho_ms/pi) * max(eps, 1.0f - EFo)    // multi-scatter lobe
                             * max(eps, 1.0f - EFi)
                             / max(eps, 1.0f - avgEF);
     return f_ss + f_ms;
@@ -109,13 +109,13 @@ void ltc_coeffs(float mu, float r,
 vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
 {
     float a, b, c, d; ltc_coeffs(wo_local.z, r, a, b, c, d);   // coeffs of LTC $M$
-    float R = sqrt(u1); float phi = 2.0f * PI * u2;            // CLTC sampling
+    float R = sqrt(u1); float phi = 2.0f * pi * u2;            // CLTC sampling
     float x = R * cos(phi); float y = R * sin(phi);            // CLTC sampling
     float vz = 1.0f / sqrt(d*d + 1.0f);                        // CLTC sampling factors
     float s = 0.5f * (1.0f + vz);                              // CLTC sampling factors
     x = -mix(sqrt(1.0f - y*y), x, s);                          // CLTC sampling
     vec3 wh = vec3(x, y, sqrt(max(1.0f - (x*x + y*y), 0.0f))); // $w_h$ sample via CLTC
-    float pdf_wh = wh.z / (PI * s);                            // PDF of $w_h$ sample
+    float pdf_wh = wh.z / (pi * s);                            // PDF of $w_h$ sample
     vec3 wi = vec3(a*wh.x + b*wh.z, c*wh.y, d*wh.x + wh.z);    // $M w_h$ (unnormalized)
     float len = length(wi);                                    // $|M w_h| = 1/|M^{-1} w_h|$
     float detM = c*(a - b*d);                                  // $|M|$
@@ -135,14 +135,14 @@ float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
     float lensq = dot(wh, wh);                                               // $|M| |M^{-1} wi|$
     float vz = 1.0f / sqrt(d*d + 1.0f);                                      // CLTC sampling factors
     float s = 0.5f * (1.0f + vz);                                            // CLTC sampling factors
-    float pdf = sqr(detM / lensq) * max(wh.z, 0.0f) / (PI * s);              // $w_i$ sample PDF
+    float pdf = sqr(detM / lensq) * max(wh.z, 0.0f) / (pi * s);              // $w_i$ sample PDF
     return pdf;
 }
 
 vec3 uniform_lobe_sample(float u1, float u2)
 {
     float sinTheta = sqrt(1.0f - u1*u1);
-    float phi = 2.0f * PI * u2;
+    float phi = 2.0f * pi * u2;
     return vec3(sinTheta * cos(phi), sinTheta * sin(phi), u1);
 }
 
@@ -160,7 +160,7 @@ vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
         u1 = (u1 - P_u) / P_c;
         wi = cltc_sample(wo_local, r, u1, u2);
         pdf_c = wi.w; }
-    const float pdf_u = 1.0f / (2.0f * PI);
+    const float pdf_u = 1.0f / (2.0f * pi);
     wi.w = P_u*pdf_u + P_c*pdf_c;
     return wi;
 }
@@ -171,7 +171,7 @@ float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
     float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
     float P_c = 1.0 - P_u;
     float pdf_c = cltc_pdf(wo_local, wi_local, r);
-    const float pdf_u = 1.0f / (2.0f * PI);
+    const float pdf_u = 1.0f / (2.0f * pi);
     return P_u*pdf_u + P_c*pdf_c;
 }
 
