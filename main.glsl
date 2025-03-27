@@ -103,8 +103,8 @@ void ltc_coeffs(float mu, float r,
 {
     a = 1.0 + r*(0.303392f + (-0.518982f + 0.111709f*mu)*mu + (-0.276266f + 0.335918f*mu)*r);
     b = r*(-1.16407f + 1.15859f*mu + (0.150815f - 0.150105f*mu)*r)/(mu*mu*mu - 1.43545f);
-    c = 1.0f + (0.20013f + (-0.506373f + 0.261777f*mu)*mu)*r;
-    d = r*(0.540852f + (-1.01625f + 0.475392f*mu)*mu)/(-1.0743f + mu*(0.0725628f + mu));
+    c = 1.0f + r*(0.20013f + (-0.506373f + 0.261777f*mu)*mu);
+    d = r*(0.540852f + (-1.01625f + 0.475392f*mu)*mu)/(-1.0743f + (0.0725628f + mu)*mu);
 }
 
 vec4 cltc_sample(in vec3 wo_local, float r, float u1, float u2)
@@ -150,7 +150,7 @@ vec3 uniform_lobe_sample(float u1, float u2)
 vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
 {
     float mu = wo_local.z;
-    float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
+    float P_u = pow(r, 0.1f) * (0.162925f + (-0.372058f + (0.538233f - 0.290822f*mu)*mu)*mu);
     float P_c = 1.0f - P_u;
     vec4 wi; float pdf_c;
     if (u1 <= P_u) {
@@ -169,7 +169,7 @@ vec4 sample_EON(in vec3 wo_local, float r, float u1, float u2)
 float pdf_EON(in vec3 wo_local, in vec3 wi_local, float r)
 {
     float mu = wo_local.z;
-    float P_u = pow(r, 0.1f) * (0.162925f + mu*(-0.372058f + (0.538233f - 0.290822f*mu)*mu));
+    float P_u = pow(r, 0.1f) * (0.162925f + (-0.372058f + (0.538233f - 0.290822f*mu)*mu)*mu);
     float P_c = 1.0 - P_u;
     float pdf_c = cltc_pdf(wo_local, wi_local, r);
     const float pdf_u = 1.0f / (2.0f * pi);
