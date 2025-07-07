@@ -134,7 +134,7 @@ float cltc_pdf(in vec3 wo_local, in vec3 wi_local, float r)
     float lensq = dot(wh, wh);                                               // $|M| |M^{-1} wi|$
     float vz = 1.0f / sqrt(d*d + 1.0f);                                      // CLTC sampling factors
     float s = 0.5f * (1.0f + vz);                                            // CLTC sampling factors
-    float pdf = sqr(detM / lensq) * max(wh.z, 0.0f) / (PI * s);              // $w_i$ sample PDF
+    float pdf = detM*detM/(lensq*lensq) * max(wh.z, 0.0f) / (PI * s);        // $w_i$ sample PDF
     return pdf;
 }
 
