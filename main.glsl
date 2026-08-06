@@ -21,9 +21,10 @@ float E_FON_exact(float mu, float r)
     #define safe_acos(x) (acos(clamp(x, -1.0, 1.0)))
     float AF = 1.0f / (1.0f + constant1_FON * r); // FON $A$ coeff.
     float BF = r * AF;                            // FON $B$ coeff.
+    mu = clamp(mu, -1.0f, 1.0f);
     float Si = sqrt(1.0f - (mu * mu));
-    float G = Si * (acos(clamp(mu, -1.0f, 1.0f)) - Si * mu)
-            + (2.0f / 3.0f) * ((Si / mu) * (1.0f - (Si * Si * Si)) - Si);
+    float G = Si * (acos(mu) - Si * mu)
+            + (2.0f / 3.0f) * (Si * mu * (1.0f + Si + (Si * Si)) / (1.0f + Si) - Si);
     return AF + (BF * rcppi) * G;
 }
 
